@@ -1,9 +1,15 @@
-// Placeholder: the inquiry list is built in Phase 8.
+import { Suspense } from 'react';
+import { InquiriesView } from '@/components/inquiries/InquiriesView';
+import { LoadingState } from '@/components/LoadingState';
+
+export const metadata = { title: 'Inquiries · Inquiry Desk' };
+
+// InquiriesView reads its filters from the URL (useSearchParams), which
+// Next.js requires to sit inside a Suspense boundary.
 export default function InquiriesPage() {
   return (
-    <div>
-      <h1 className="text-xl font-semibold">Inquiries</h1>
-      <p className="mt-2 text-sm text-slate-600">The inquiry list will appear here.</p>
-    </div>
+    <Suspense fallback={<LoadingState label="Loading inquiries…" rows={5} />}>
+      <InquiriesView />
+    </Suspense>
   );
 }
