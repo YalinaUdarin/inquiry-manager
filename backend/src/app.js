@@ -6,6 +6,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 
 const healthRoutes = require('./routes/health.routes');
+const authRoutes = require('./routes/auth.routes');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 
 function createApp() {
@@ -20,6 +21,7 @@ function createApp() {
   app.use(cookieParser());
 
   app.use('/api/health', healthRoutes);
+  app.use('/api/auth', authRoutes);
 
   // Order matters: these two must come after all routes.
   app.use(notFoundHandler);
