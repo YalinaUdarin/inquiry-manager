@@ -39,6 +39,15 @@ export function LoginForm() {
   const [formError, setFormError] = useState(''); // message about the whole form
   const emailRef = useRef(null);
   const passwordRef = useRef(null);
+  // Which field to focus next ('email' | 'password'). Focusing happens in an
+  // effect, after React re-renders: when the server answers, the inputs are
+  // still disabled for that moment, and a disabled input can't take focus.
+  const [focusRequest, setFocusRequest] = useState(null); // { name }
+
+  useEffect(() => {
+    if (!focusRequest) return;
+    (focusRequest.name === 'email' ? emailRef : passwordRef).current?.focus();
+  }, [focusRequest]);
 
   // Already signed in (e.g. opened /login in a new tab)? Go straight in.
   useEffect(() => {
@@ -67,7 +76,7 @@ export function LoginForm() {
     if (!data) {
       // Move focus to the first problem, so keyboard and screen-reader users
       // land on it directly.
-      (found.email ? emailRef : passwordRef).current?.focus();
+      setFocusRequest({ name: found.email ? 'email' : 'password' });
       return;
     }
 
@@ -82,7 +91,7 @@ export function LoginForm() {
           setFormError(err.message);
           if (err.code === 'INVALID_CREDENTIALS') {
             setValues((v) => ({ ...v, password: '' }));
-            passwordRef.current?.focus();
+            setFocusRequest({ name: 'password' });
           }
         }
       },

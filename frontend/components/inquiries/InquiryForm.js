@@ -11,7 +11,7 @@
 //                    failure. (Passed in, so tests can supply a fake.)
 //   onCancel()     → called by the Cancel button.
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { FormField } from '@/components/FormField';
 import { inquirySchema, validate, LIMITS } from '@/lib/validation';
@@ -26,9 +26,17 @@ export function InquiryForm({ onSubmit, onCancel }) {
   const [touched, setTouched] = useState({}); // fields the user has left
   const [submitting, setSubmitting] = useState(false);
   const [banner, setBanner] = useState(null); // { message, existingId? }
+  // Which field to focus next. Focusing happens in an effect, after React has
+  // re-rendered: right after a failed save the inputs are still disabled at
+  // the moment the error arrives, and a disabled input can't take focus.
+  const [focusRequest, setFocusRequest] = useState(null); // { name }
+
+  useEffect(() => {
+    if (focusRequest) formRef.current?.elements.namedItem(focusRequest.name)?.focus();
+  }, [focusRequest]);
 
   function focusField(name) {
-    formRef.current?.elements.namedItem(name)?.focus();
+    if (name) setFocusRequest({ name }); // a new object each time, so the effect re-runs
   }
 
   function updateField(name, value) {
