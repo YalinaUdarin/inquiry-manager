@@ -20,6 +20,43 @@ export function useInquiryList(filters) {
   });
 }
 
+// One inquiry with its history. Returns the inquiry object itself (not the
+// API's { inquiry } wrapper), matching what create and status changes store.
+export function useInquiry(id) {
+  return useQuery({
+    queryKey: queryKeys.inquiries.detail(id),
+    queryFn: async ({ signal }) => (await api.getInquiry(id, { signal })).inquiry,
+  });
+}
+
+// Changes an inquiry's status. Sends the version this screen last saw, so the
+// server can refuse the change if someone else changed the inquiry first.
+export function useChangeStatus(id) {
+  const queryClient = useQueryClient();
+  const detailKey = queryKeys.inquiries.detail(id);
+  const markListsStale = () => queryClient.invalidateQueries({ queryKey: ['inquiries', 'list'] });
+
+  return useMutation({
+    mutationFn: async ({ status, version }) => (await api.changeStatus(id, { status, version })).inquiry,
+    onSuccess: (inquiry) => {
+      queryClient.setQueryData(detailKey, inquiry);
+      markListsStale();
+    },
+    onError: (err) => {
+      if (err.code === 'STALE_RECORD' && err.details?.current) {
+        // Someone else changed it first. The server sent the latest version,
+        // so show that straight away instead of the out-of-date one.
+        queryClient.setQueryData(detailKey, err.details.current);
+        markListsStale();
+      } else if (err.status === 404) {
+        // Gone, or no longer ours: reload so the page shows "not found".
+        queryClient.invalidateQueries({ queryKey: detailKey });
+        markListsStale();
+      }
+    },
+  });
+}
+
 // Records a new inquiry. On success, the new inquiry is put straight into
 // the cache (so its page opens instantly) and every list is marked out of
 // date, so counts and results include it next time they're shown.
