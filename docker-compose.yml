@@ -1,0 +1,24 @@
+# Local PostgreSQL for development and tests.
+# Usage: docker compose up -d
+services:
+  db:
+    image: postgres:16
+    container_name: inquiry-manager-db
+    environment:
+      POSTGRES_USER: inquiry
+      POSTGRES_PASSWORD: inquiry
+      POSTGRES_DB: inquiries          # dev database
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Runs once, on first start: creates the separate test database.
+      - ./docker/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inquiry -d inquiries"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
