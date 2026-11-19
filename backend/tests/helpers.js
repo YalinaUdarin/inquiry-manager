@@ -31,4 +31,19 @@ export async function loginAs(app, email, password = DEMO_PASSWORD) {
   return agent;
 }
 
+// Reads an inquiry straight from the database (bypassing the API), to check
+// what was really stored. Returns the row, or undefined.
+export async function dbInquiryBySubject(subject) {
+  const { rows } = await pool.query(
+    'SELECT id, status, version, assigned_to FROM inquiries WHERE subject = $1',
+    [subject],
+  );
+  return rows[0];
+}
+
+export async function dbCount(table) {
+  const { rows } = await pool.query(`SELECT count(*)::int AS n FROM ${table}`);
+  return rows[0].n;
+}
+
 export { DEMO_PASSWORD };
