@@ -168,8 +168,22 @@ describe('creating inquiries: validation', () => {
     expect(res.status).toBe(400);
     expect(res.body.error.details).toEqual({
       customerName: 'Customer name is required.',
-      contact: 'Enter a valid email address or phone number.',
+      contact: 'Enter an email address or a Sri Lankan phone number.',
     });
+  });
+
+  it('rejects a customer name containing digits or symbols, and saves nothing', async () => {
+    const before = await dbCount('inquiries');
+    const res = await alice.post('/api/inquiries').send({ ...VALID_INQUIRY, customerName: 'R2-D2' });
+    expect(res.status).toBe(400);
+    expect(res.body.error.details.customerName).toMatch(/can only contain letters/);
+    expect(await dbCount('inquiries')).toBe(before);
+  });
+
+  it('rejects a phone number that is not a Sri Lankan number', async () => {
+    const res = await alice.post('/api/inquiries').send({ ...VALID_INQUIRY, contact: '+1 555 123 4567' });
+    expect(res.status).toBe(400);
+    expect(res.body.error.details.contact).toMatch(/Sri Lankan phone number/);
   });
 
   it('rejects text over the length limit', async () => {
@@ -178,8 +192,10 @@ describe('creating inquiries: validation', () => {
     expect(res.body.error.details.subject).toMatch(/150 characters/);
   });
 
-  it('accepts a phone number as the contact', async () => {
-    const res = await alice.post('/api/inquiries').send({ ...VALID_INQUIRY, contact: '+94 (77) 123-4567' });
+  it('accepts a Sri Lankan phone number and a name with an apostrophe', async () => {
+    const res = await alice
+      .post('/api/inquiries')
+      .send({ ...VALID_INQUIRY, customerName: "Mary-Jane O'Neil", contact: '077-123-4567' });
     expect(res.status).toBe(201);
   });
 
@@ -216,6 +232,15 @@ describe('creating inquiries: duplicate submissions', () => {
     });
     expect(second.status).toBe(409);
     expect(second.body.error.code).toBe('DUPLICATE_INQUIRY');
+    expect(second.body.error.details).toEqual({ existingId: first.body.inquiry.id });
+  });
+
+  it('treats the local and +94 forms of the same phone number as the same contact', async () => {
+    const phone = { ...VALID_INQUIRY, contact: '077 123 4567' };
+    const first = await alice.post('/api/inquiries').send(phone);
+    expect(first.status).toBe(201);
+    const second = await alice.post('/api/inquiries').send({ ...phone, contact: '+94 77-123-4567' });
+    expect(second.status).toBe(409);
     expect(second.body.error.details).toEqual({ existingId: first.body.inquiry.id });
   });
 

@@ -114,7 +114,7 @@ export function InquiryForm({ onSubmit, onCancel }) {
 
       <div className="grid gap-5 sm:grid-cols-2">
         <FormField label="Customer name" autoComplete="off" {...fieldProps('customerName')} />
-        <FormField label="Contact" hint="Email address or phone number" autoComplete="off" {...fieldProps('contact')} />
+        <FormField label="Contact" hint="Email, or a Sri Lankan phone number like 077 123 4567" autoComplete="off" {...fieldProps('contact')} />
       </div>
       <FormField label="Subject" placeholder="e.g. Order #1042 arrived damaged" {...fieldProps('subject')} />
       <div>

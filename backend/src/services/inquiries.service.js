@@ -15,6 +15,19 @@ const DUPLICATE_WINDOW_MINUTES = 10;
 
 const notFound = () => new AppError(404, 'NOT_FOUND', 'Inquiry not found.');
 
+// One canonical form of a contact, used to spot duplicate submissions:
+// lowercase, no spaces or dashes, and a local phone number (0 + 9 digits)
+// rewritten as +94 + 9 digits. So "077 123 4567", "077-123-4567" and
+// "+94 77 123 4567" all become "+94771234567".
+// CONTACT_KEY_SQL does exactly the same in SQL, for the stored rows.
+function contactKey(contact) {
+  return contact
+    .toLowerCase()
+    .replace(/[\s-]/g, '')
+    .replace(/^0(\d{9})$/, '+94$1');
+}
+const CONTACT_KEY_SQL = String.raw`regexp_replace(lower(regexp_replace(contact, '[\s-]', '', 'g')), '^0(\d{9})$', '+94\1')`;
+
 // Adds the access rule to a query. Pushes any needed value onto `params`
 // and returns the SQL condition, e.g. "i.assigned_to = $1".
 function accessCondition(user, params) {
@@ -159,27 +172,26 @@ async function getById(user, id, client = db) {
 // The new inquiry is assigned to the person who records it.
 async function create(user, data) {
   return db.withTransaction(async (client) => {
-    // Normalised form used to compare submissions: lowercase, no spaces,
-    // so "+94 77 123 4567" and "+94771234567" count as the same contact.
-    const contactKey = data.contact.toLowerCase().replace(/\s+/g, '');
+    // Normalised forms used to compare submissions (see contactKey above).
+    const newContactKey = contactKey(data.contact);
     const subjectKey = data.subject.toLowerCase();
 
     // Lock on this contact+subject pair until the transaction ends, so two
     // identical requests arriving at the same moment can't both slip past
     // the duplicate check below. Different pairs don't block each other.
-    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`${contactKey}|${subjectKey}`]);
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`${newContactKey}|${subjectKey}`]);
 
     // Duplicate check covers ALL open inquiries, not just the user's own, so
     // two colleagues don't both pick up the same customer request.
     const dup = await client.query(
       `SELECT id, assigned_to
          FROM inquiries
-        WHERE lower(regexp_replace(contact, '\\s', '', 'g')) = $1
+        WHERE ${CONTACT_KEY_SQL} = $1
           AND lower(subject) = $2
           AND status <> 'RESOLVED'
           AND created_at > now() - make_interval(mins => $3)
         LIMIT 1`,
-      [contactKey, subjectKey, DUPLICATE_WINDOW_MINUTES],
+      [newContactKey, subjectKey, DUPLICATE_WINDOW_MINUTES],
     );
     if (dup.rows[0]) {
       const existing = dup.rows[0];

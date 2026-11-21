@@ -7,14 +7,47 @@
 
 import { z } from 'zod';
 
-function isPhone(value) {
-  if (!/^\+?[\d\s\-()]+$/.test(value)) return false;
-  const digits = value.replace(/\D/g, '').length;
-  return digits >= 7 && digits <= 15;
-}
-
 function isEmail(value) {
   return z.email().safeParse(value).success;
+}
+
+// Sri Lankan phone: spaces/dashes allowed, then 0 + 9 digits or +94 + 9 digits.
+function isSriLankanPhone(value) {
+  const compact = value.replace(/[\s-]/g, '');
+  return /^0\d{9}$/.test(compact) || /^\+94\d{9}$/.test(compact);
+}
+
+// A message for what's wrong with the contact, or null if it's fine.
+// Advice matches what the user seems to be typing (email vs phone).
+function contactProblem(value) {
+  if (value.includes('@')) {
+    return isEmail(value) ? null : 'Enter a valid email address, e.g. name@example.com.';
+  }
+  if (/^[+\d\s-]+$/.test(value)) {
+    return isSriLankanPhone(value)
+      ? null
+      : 'Enter a Sri Lankan phone number, e.g. 077 123 4567 or +94 77 123 4567.';
+  }
+  return 'Enter an email address or a Sri Lankan phone number.';
+}
+
+// Names: letters (any language), spaces, apostrophes, hyphens, dots; at
+// least 2 letters. e.g. "Mary-Jane O'Neil", "K. Perera".
+function nameProblem(value) {
+  if (!/^[\p{L}\p{M}\s'’.-]+$/u.test(value)) {
+    return "Customer name can only contain letters, spaces, apostrophes ('), hyphens (-) and dots (.).";
+  }
+  if ((value.match(/\p{L}/gu) || []).length < 2) {
+    return 'Customer name must contain at least 2 letters.';
+  }
+  return null;
+}
+
+function rule(check) {
+  return (value, ctx) => {
+    const message = check(value);
+    if (message) ctx.addIssue({ code: 'custom', message });
+  };
 }
 
 function requiredText(label, max) {
@@ -33,11 +66,8 @@ export const LIMITS = {
 };
 
 export const inquirySchema = z.object({
-  customerName: requiredText('Customer name', LIMITS.customerName),
-  contact: requiredText('Contact', LIMITS.contact).refine(
-    (value) => isEmail(value) || isPhone(value),
-    'Enter a valid email address or phone number.',
-  ),
+  customerName: requiredText('Customer name', LIMITS.customerName).superRefine(rule(nameProblem)),
+  contact: requiredText('Contact', LIMITS.contact).superRefine(rule(contactProblem)),
   subject: requiredText('Subject', LIMITS.subject),
   description: requiredText('Description', LIMITS.description),
 });
