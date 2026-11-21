@@ -2,6 +2,16 @@
 
 *Coffee Ninja: Fullstack Development Technical Assessment*
 
+> **Note:** This is the original plan, written before any code. It's kept to show how the work was planned and split into phases (one commit per phase). The finished app differs in places. For what was actually built and why, see the [README](../README.md) and [DECISIONS.md](../DECISIONS.md). The main differences:
+>
+> - Pagination, status counts and URL filters were all **built**, not cut.
+> - The UI has **no copy of the transition table**. The API sends `allowedTransitions` with each inquiry.
+> - Validation is stricter than planned:
+>   - Names: letters, digits and `' - . , & ( )`.
+>   - Phone numbers: Sri Lankan only.
+>   - Duplicate matching: treats `077…` and `+94 77…` as the same number.
+> - Next.js 16's Cache Components feature is turned off, and `bcryptjs` is used instead of `bcrypt`.
+
 | | |
 |---|---|
 | **Stack** | Next.js (React) · Node.js + Express · PostgreSQL |

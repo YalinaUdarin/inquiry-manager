@@ -6,7 +6,7 @@ A small full-stack app for recording customer inquiries, finding them later, and
 - **Backend:** Node.js + Express 5, plain SQL with `pg`, zod validation
 - **Database:** PostgreSQL 16 (Docker)
 
-Design choices, assumptions and trade-offs are explained in **[DECISIONS.md](DECISIONS.md)**.
+Design choices, assumptions and trade-offs are explained in **[DECISIONS.md](DECISIONS.md)**. The original phase-by-phase plan is in [docs/PLAN.md](docs/PLAN.md).
 
 ---
 
