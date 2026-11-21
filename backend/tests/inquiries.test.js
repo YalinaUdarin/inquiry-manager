@@ -172,12 +172,18 @@ describe('creating inquiries: validation', () => {
     });
   });
 
-  it('rejects a customer name containing digits or symbols, and saves nothing', async () => {
+  it('rejects a customer name containing symbols, and saves nothing', async () => {
     const before = await dbCount('inquiries');
-    const res = await alice.post('/api/inquiries').send({ ...VALID_INQUIRY, customerName: 'R2-D2' });
+    const res = await alice.post('/api/inquiries').send({ ...VALID_INQUIRY, customerName: 'Alice@Home' });
     expect(res.status).toBe(400);
-    expect(res.body.error.details.customerName).toMatch(/can only contain letters/);
+    expect(res.body.error.details.customerName).toMatch(/can only contain letters, numbers/);
     expect(await dbCount('inquiries')).toBe(before);
+  });
+
+  it('accepts a business name as the customer', async () => {
+    const res = await alice.post('/api/inquiries').send({ ...VALID_INQUIRY, customerName: 'A&B Traders (Pvt) Ltd' });
+    expect(res.status).toBe(201);
+    expect(res.body.inquiry.customerName).toBe('A&B Traders (Pvt) Ltd');
   });
 
   it('rejects a phone number that is not a Sri Lankan number', async () => {

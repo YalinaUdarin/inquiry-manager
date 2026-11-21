@@ -35,18 +35,33 @@ describe('contact: an email, or a Sri Lankan phone number', () => {
   }
 });
 
-describe('customer name: letters and name punctuation only', () => {
-  const accepted = ['Nimal Jayasinghe', "Mary-Jane O'Neil", 'K. Perera', 'José Álvarez', 'நிமல்', 'Al'];
+describe('customer name: a person or a business', () => {
+  const accepted = [
+    'Nimal Jayasinghe',
+    "Mary-Jane O'Neil",
+    'K. Perera',
+    'José Álvarez',
+    'நிமல்',
+    'Al',
+    // Businesses
+    'A&B Traders',
+    '7-Eleven',
+    'Perera & Sons (Pvt) Ltd',
+    'Smith, Jones and Co.',
+    'R2-D2',
+  ];
   for (const value of accepted) {
     it(`accepts "${value}"`, () => expect(nameProblem(value)).toBeNull());
   }
 
   const rejected = {
-    'R2-D2': /can only contain letters/,
-    'John_Smith': /can only contain letters/,
-    'Alice@Home': /can only contain letters/,
+    'John_Smith': /can only contain letters, numbers/,
+    'Alice@Home': /can only contain letters, numbers/,
+    '<script>': /can only contain letters, numbers/,
+    'Shop #5': /can only contain letters, numbers/,
     'A': /at least 2 letters/,
     "'. -": /at least 2 letters/,
+    '123 456': /at least 2 letters/,
   };
   for (const [value, message] of Object.entries(rejected)) {
     it(`rejects "${value}"`, () => expect(nameProblem(value)).toMatch(message));

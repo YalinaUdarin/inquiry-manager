@@ -51,12 +51,14 @@ function contactProblem(value) {
   return 'Enter an email address or a Sri Lankan phone number.';
 }
 
-// Customer names: letters in any language (\p{L}, plus accents \p{M}),
-// spaces, apostrophes, hyphens and dots, e.g. "Mary-Jane O'Neil", "K. Perera".
-// No digits or other symbols, and at least 2 actual letters.
+// Customer names: a person or a business. Letters in any language (\p{L},
+// plus accents \p{M}), digits, spaces and the punctuation real names use:
+// ' - . , & ( )  e.g. "Mary-Jane O'Neil", "K. Perera", "A&B Traders",
+// "7-Eleven", "Perera & Sons (Pvt) Ltd". Other symbols (@ # $ < > _ …) are
+// rejected, and there must be at least 2 actual letters.
 function nameProblem(value) {
-  if (!/^[\p{L}\p{M}\s'’.-]+$/u.test(value)) {
-    return "Customer name can only contain letters, spaces, apostrophes ('), hyphens (-) and dots (.).";
+  if (!/^[\p{L}\p{M}\d\s'’.,&()-]+$/u.test(value)) {
+    return "Customer name can only contain letters, numbers, spaces and ' - . , & ( ).";
   }
   if ((value.match(/\p{L}/gu) || []).length < 2) {
     return 'Customer name must contain at least 2 letters.';

@@ -84,13 +84,13 @@ describe('InquiryForm: before submitting', () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it('rejects a customer name with digits or symbols', async () => {
+  it('rejects a customer name with symbols', async () => {
     const { onSubmit, fields, submit, fillValid } = setup();
 
-    await fillValid({ customerName: 'Nimal 123' });
+    await fillValid({ customerName: 'Nimal@123' });
     await submit();
 
-    expect(screen.getByText(/Customer name can only contain letters/)).toBeInTheDocument();
+    expect(screen.getByText(/Customer name can only contain letters, numbers/)).toBeInTheDocument();
     expect(fields.customerName).toHaveFocus();
     expect(onSubmit).not.toHaveBeenCalled();
   });
@@ -102,6 +102,15 @@ describe('InquiryForm: before submitting', () => {
     await submit();
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('accepts a business name as the customer', async () => {
+    const { onSubmit, submit, fillValid } = setup();
+
+    await fillValid({ customerName: 'A&B Traders (Pvt) Ltd' });
+    await submit();
+
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ customerName: 'A&B Traders (Pvt) Ltd' }));
   });
 
   it('clears an error as soon as the field is fixed', async () => {

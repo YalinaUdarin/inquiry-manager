@@ -31,11 +31,11 @@ function contactProblem(value) {
   return 'Enter an email address or a Sri Lankan phone number.';
 }
 
-// Names: letters (any language), spaces, apostrophes, hyphens, dots; at
-// least 2 letters. e.g. "Mary-Jane O'Neil", "K. Perera".
+// Names of people or businesses: letters (any language), digits, spaces and
+// ' - . , & ( ); at least 2 letters. e.g. "K. Perera", "A&B Traders", "7-Eleven".
 function nameProblem(value) {
-  if (!/^[\p{L}\p{M}\s'’.-]+$/u.test(value)) {
-    return "Customer name can only contain letters, spaces, apostrophes ('), hyphens (-) and dots (.).";
+  if (!/^[\p{L}\p{M}\d\s'’.,&()-]+$/u.test(value)) {
+    return "Customer name can only contain letters, numbers, spaces and ' - . , & ( ).";
   }
   if ((value.match(/\p{L}/gu) || []).length < 2) {
     return 'Customer name must contain at least 2 letters.';
