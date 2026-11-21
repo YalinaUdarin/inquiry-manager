@@ -8,6 +8,19 @@ A small full-stack app for recording customer inquiries, finding them later, and
 
 Design choices, assumptions and trade-offs are explained in **[DECISIONS.md](DECISIONS.md)**. The original phase-by-phase plan is in [docs/PLAN.md](docs/PLAN.md).
 
+### Technology choices
+
+| Choice | Why |
+|---|---|
+| **`pg` with plain SQL, no ORM** | The access rule and the version check sit visibly in each query, so it's clear exactly what the database is asked. |
+| **zod** for request validation | One schema per request gives a clear message per field. The form uses a copy of the same rules for instant feedback. |
+| **JWT in an httpOnly, `SameSite=Lax` cookie** | Page JavaScript can't read the token, which limits the damage from injected scripts. Lax stops other sites from sending writes with it. |
+| **Next.js forwards `/api/*` to Express** | The browser only talks to one origin, so the cookie works without any CORS setup. |
+| **TanStack Query** | Handles loading and error states, caching, and refetching when a tab regains focus. That last one is part of the stale-data handling. |
+| **Next.js Cache Components turned off** | Every page is behind a login and loads its data in the browser, so there's nothing for the server to cache. |
+| **`bcryptjs`** for password hashing | Pure JavaScript, so `npm install` works on any machine without native build tools. |
+| **Vitest + Testing Library** | One test runner for both the backend and the frontend. |
+
 ---
 
 ## Quick start
